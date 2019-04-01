@@ -1,5 +1,7 @@
+// requiring all packets needed/used
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var Table = require("cli-table");
 
 // create connection to the sql database
 var connection = mysql.createConnection({
@@ -14,18 +16,30 @@ var connection = mysql.createConnection({
   password: "root",
   database: "bamazon_db"
 })
+        //call function to start
+    start();
+
     // function to start the whole process/storefront
 function start() {
     connection.query("SELECT * FROM products", function(err, res) {
         if (err) throw err;
 
         console.log("-----Welcome to Bamazon-----");
-        console.log("------------------------------");
         // table for products to show up in console
+        var table = new Table({
+            head: ['ID', "Product Name", "Department", "Price", "Amount in Stock"],
+            style: {
+                head: ['blue'],
+            }
+        })
+            // pushing info to table
         for (var i = 0; i < res.length; i++) {
-            console.log("Id: " + res[i].item_id +  " | "  +  "Product:  "  + res[i].product_name +  " | "  +  "Department:  "  +  res[i].department_name  +  " | "  +  "Price:  "  +  res[i].price  +  " | "  +  "QTY:  "  + res[i].stock_quantity);
-            console.log("--------------------------------------------------------------------------------------------");
+            table.push(
+                [res[i].item_id, res[i].product_name, res[i].department_name,"$"  +  res[i].price, res[i].stock_quantity]
+                );
         }
+
+        console.log(table.toString());
         // starts inquirer/question process
     inquirer.prompt([
         {
@@ -52,27 +66,36 @@ function start() {
             } 
         } 
     }
-])
-        // function to run the purchase process
-    .then(function(purchase) {
+            // function to run the purchase process
+]).then(function(purchase) {
         var purchaseid = (purchase.id) - 1;
         var howmanybought = parseInt(purchase.quantity);
-                                            // toFixed(2) keeps number result at no more than 2 decimal places
+                // toFixed(2) keeps number result at no more than 2 decimal places(found at MDN.com)
         var totalpurch = parseFloat(((res[purchaseid].price) * howmanybought).toFixed(2));
         var quantityonhand = (res[purchaseid].stock_quantity - howmanybought)
-      
+        
+
         if (res[purchaseid].stock_quantity >= howmanybought) {
-               // updates the db quantity number
-            connection.query("UPDATE products SET ? WHERE ?", 
+              // updates the db quantity number
+            connection.query("UPDATE products SET ? WHERE ?", [
                 {stock_quantity: quantityonhand},
-                {item_id: purchaseid.id},
-             function(err, result) {
+                {item_id: purchase.id}
+            ], function(err, result) {
                 if(err) throw err;
-                console.log("Order confirmed. Your total is $" + totalpurch.toFixed(2) + "Your item will be shipped to you in 2-6 business days.");
-                });
+                console.log("Order confirmed. Your total is $" + totalpurch.toFixed(2) + ". Your item will be shipped to you in 2-6 business days.");
+                exit();
+            });
+            }
+                // else statement for insufficient quantity
+            else {
+                console.log("\nInsufficient Quantity, please choose a different product\n");
+                start();
             }
         })
     })
 };
-
-    start();
+    // exit function to end app
+    function exit() {
+        console.log("Thank you for visiting Bamazon!");
+        connection.end();
+    }
