@@ -6,8 +6,12 @@ This app gives the user choices of items to buy and will give you the total of p
 
 The instructions are pretty easy, the app asks you what product ID you would like to purchase from the table. Once you enter your ID/number choice of the product you would like to purchase, it then asks how many of that product you would like to purchase, once that selection is made it gives you the grand total of your purchase.
 
-This app uses javascript and node.js with the mysql, inquirer & cli-table packets to function.
-
+### This app uses:
+- JavaScript
+- NodeJS
+- My SQL
+- Inquirer
+- CLI-table packets
 
 
 ## GIF showing how the purchase process works:
